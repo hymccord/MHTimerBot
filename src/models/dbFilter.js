@@ -59,4 +59,4 @@ class DatabaseFilter {
  * @property {null} dynamic_start
  */
 
-module.exports = DatabaseFilter;
+export default DatabaseFilter;

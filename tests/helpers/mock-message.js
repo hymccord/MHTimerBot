@@ -1,11 +1,11 @@
-const { Collection, ChannelType } = require('discord.js');
-const Keys = require('../../src/utils/discord-enum-keys');
-const sinon = require('sinon');
+import { Collection, ChannelType } from 'discord.js';
+import * as Keys from '../../src/utils/discord-enum-keys';
+import * as sinon from 'sinon';
 
 /**
  * A facsimile of a Discord Message, for use in tests
  * @param {object} c Config object
- * @param {keyof ChannelTypes} c.channelType Type of the channel the message was received in (default = GuildText)
+ * @param {keyof ChannelType} c.channelType Type of the channel the message was received in (default = GuildText)
  * @param {Function} c.reactStub A stub for message#react
  * @param {Function} c.replyStub A stub for message#reply
  * @param {Function} c.sendStub A stub for message.channel#send
@@ -51,4 +51,6 @@ const mockMessage = ({
     return stub;
 };
 
-module.exports = mockMessage;
+export {
+    mockMessage,
+};

@@ -1,10 +1,7 @@
-// eslint-disable-next-line no-unused-vars
-const { Message } = require('discord.js');
-
-const CommandResult = require('../interfaces/command-result');
-const Logger = require('../modules/logger');
-const { getKnownTimersDetails, timerAliases, nextTimer } = require('../modules/timer-helper');
-
+import { Message } from 'discord.js';
+import CommandResult from '../interfaces/command-result.js';
+import Logger from '../modules/logger.js';
+import { getKnownTimersDetails, timerAliases, nextTimer } from '../modules/timer-helper.js';
 const usage = [
     '<area> or <sub-area> will provide a message about the next related occurrence.',
     'Areas are Seasonal Garden (sg), Forbidden Grove (fg), Toxic Spill (ts), Balack\'s Cove (cove), and the daily reset (reset).',
@@ -66,7 +63,7 @@ async function doNEXT(message, tokens) {
     return theResult;
 }
 
-module.exports = {
+export default {
     name: 'next',
     args: true,
     usage: usage,

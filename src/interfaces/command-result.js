@@ -1,6 +1,3 @@
-// eslint-disable-next-line no-unused-vars
-const { Message } = require('discord.js');
-
 /**
  * A "command result" is a simple public class that conveys information about the result of a command that executed.
  */
@@ -14,7 +11,7 @@ class CommandResult {
     // sentDm = false;
     /** @type {boolean} Whether the command replied at all (either publicly or privately). */
     // replied = false;
-    /** @type {Message} The original command request message (a Discord Message object) */
+    /** @type {import('discord.js').Message} The original command request message (a Discord Message object) */
     // message = null;
 
     /**
@@ -23,7 +20,7 @@ class CommandResult {
      * @param {boolean} c.botError Whether the bot encountered an error processing the command
      * @param {boolean} c.sentDm Whether the command sent a DM
      * @param {boolean} c.replied Whether the command sent a response (public or DM).
-     * @param {Message} c.message The original command request
+     * @param {import('discord.js').Message} c.message The original command request
      */
     constructor({
         success = null,
@@ -40,4 +37,4 @@ class CommandResult {
     }
 }
 
-module.exports = CommandResult;
+export default CommandResult;

@@ -1,10 +1,8 @@
-// eslint-disable-next-line no-unused-vars
-const { ChannelType, Message } = require('discord.js');
-
-const CommandResult = require('../interfaces/command-result');
-const { splitMessageRegex } = require('../modules/format-utils');
-const Logger = require('../modules/logger');
-const security = require('../modules/security');
+import { ChannelType } from 'discord.js';
+import CommandResult from '../interfaces/command-result.js';
+import { splitMessageRegex } from '../modules/format-utils.js';
+import Logger from '../modules/logger.js';
+import * as security from '../modules/security.js';
 const usage = [
     'view - see current settings for this server',
     'modrole - define the role on this server for moderation level',
@@ -17,7 +15,7 @@ const usage = [
 
 /**
  *
- * @param {Message} message the message that triggered the command
+ * @param {import('discord.js').Message} message the message that triggered the command
  * @param {string[]} tokens tokenized arguments to the command
  * @returns {Promise<CommandResult>}
  */
@@ -165,7 +163,7 @@ async function doSet(message, tokens) {
     return theResult;
 }
 
-module.exports = {
+export default {
     name: 'config',
     requiresArgs: true,
     usage: usage,

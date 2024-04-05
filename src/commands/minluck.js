@@ -1,9 +1,7 @@
-// eslint-disable-next-line no-unused-vars
-const { Message, CommandInteraction, ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder } = require('discord.js');
-
-const CommandResult = require('../interfaces/command-result');
-const Logger = require('../modules/logger');
-const { initialize, getMice, getMinluckString, save } = require('../modules/mhct-lookup');
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder } from 'discord.js';
+import CommandResult from '../interfaces/command-result.js';
+import Logger from '../modules/logger.js';
+import { initialize, getMice, getMinluckString, save } from '../modules/mhct-lookup.js';
 
 const usage = [
     'minluck [-A] [-a] [-d] [-f] [-h] [-l] [-p] [-P] [-s] [-t] [-r] <mouse>',
@@ -34,7 +32,7 @@ const typeMap = {
 
 /**
  * Get the minluck of a mouse
- * @param {Message} message The message that triggered the action
+ * @param {import('discord.js').Message} message The message that triggered the action
  * @param {string[]} tokens The tokens of the command
  * @returns {Promise<CommandResult>} Status of the execution
  */
@@ -86,7 +84,7 @@ async function doMINLUCK(message, tokens) {
 
 /**
  * Get the string for minluck for a mouse
- * @param {Message|CommandInteraction} message -- Hook back to the bot client
+ * @param {import('discord.js').Message|import('discord.js').CommandInteraction} message -- Hook back to the bot client
  * @param {String} mouse -- Search string
  * @param {String|Array} flags -- Power type flags
  *
@@ -112,7 +110,7 @@ function getMinLuck(message, mouse, flags) {
             if (f in typeMap)
                 return typeMap[f];
         }).filter(type => !!type );
-        if ('guildId' in message 
+        if ('guildId' in message
             && message['guildId']
             && message['guildId'] in message.client.settings.guilds
             && 'emoji' in message.client.settings.guilds[message.guildId]) {
@@ -128,7 +126,7 @@ function getMinLuck(message, mouse, flags) {
 
 /**
  * Reply to an interaction
- * @param {CommandInteraction} interaction -- the thing to respond to
+ * @param {import('discord.js').CommandInteraction} interaction -- the thing to respond to
  */
 async function interact(interaction) {
     if (interaction.isChatInputCommand()) {
@@ -139,7 +137,7 @@ async function interact(interaction) {
                     .setCustomId(interaction.id)
                     .setLabel('Send to Channel')
                     .setStyle(ButtonStyle.Primary),
-            ); 
+            );
         const results = getMinLuck(interaction, interaction.options.getString('mouse'), interaction.options.getString('powertype'));
         const collector = interaction.channel.createMessageComponentCollector({ filter, time: 1 * 60 * 1000 });
         collector.on('collect', async c => {
@@ -152,7 +150,7 @@ async function interact(interaction) {
         collector.on('end', async () => {
             await interaction.editReply({ content: results, components: [] });
         });
-        await interaction.reply({ content: results, ephemeral: true, components: [ shareButton ] }); 
+        await interaction.reply({ content: results, ephemeral: true, components: [ shareButton ] });
     } else {
         Logger.error('Somehow minluck command interaction was called without a command');
     }
@@ -160,7 +158,7 @@ async function interact(interaction) {
 
 /**
  * Reply to an autotype request. Technically this could be folded into the interact?
- * @param {CommandInteraction} interaction Must be an autocomplete interaction
+ * @param {import('discord.js').CommandInteraction} interaction Must be an autocomplete interaction
  */
 async function automice(interaction) {
     if (interaction.isAutocomplete()) {
@@ -201,7 +199,7 @@ const slashCommand = new SlashCommandBuilder()
                 { name: 'Rift', value: 'r' },
             ));
 
-module.exports = {
+export default {
     name: 'minluck',
     args: true,
     usage: usage,

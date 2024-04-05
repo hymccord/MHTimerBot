@@ -1,25 +1,13 @@
-// eslint-disable-next-line no-unused-vars
-const {
-    EmbedBuilder,
-} = require('discord.js');
-const { DateTime, Duration } = require('luxon');
-const fetch = require('node-fetch');
-const { firstBy } = require('thenby');
-const csv_parse = require('csv-parse');
-
-const DatabaseFilter = require('../models/dbFilter');
-const {
-    calculateRate,
-    prettyPrintArrayAsString,
-    intToHuman,
-    integerComma,
-    splitMessageRegex,
-    formatInterval,
-    howManyHunts,
-} = require('../modules/format-utils');
-const Logger = require('../modules/logger');
-const { getSearchedEntity } = require('../modules/search-helpers');
-
+import { EmbedBuilder } from 'discord.js';
+import { DateTime, Duration } from 'luxon';
+import fetch from 'node-fetch';
+import * as thenby from 'thenby';
+import csv_parse from 'csv-parse';
+import DatabaseFilter from '../models/dbFilter.js';
+import { calculateRate, prettyPrintArrayAsString, intToHuman, integerComma, splitMessageRegex, formatInterval, howManyHunts } from './format-utils.js';
+import Logger from './logger.js';
+import { getSearchedEntity } from './search-helpers.js';
+const { firstBy } = thenby;
 const refresh_rate = Duration.fromObject({ minutes: 30 });
 const refresh_list = {
     mouse: DateTime.utc().minus(refresh_rate),
@@ -80,7 +68,7 @@ const powerEmoji = {
  * Construct and dispatch a reaction-enabled message for interactive "search result" display.
  *
  * @param {DatabaseEntity[]} searchResults An ordered array of objects that resulted from a search.
- * @param {TextChannel} channel The channel on which the client received the find request.
+ * @param {import('discord.js').TextChannel} channel The channel on which the client received the find request.
  * @param {Function} dataCallback a Promise-returning function that converts the local entity data into the desired text response.
  * @param {boolean} isDM Whether the response will be to a private message (i.e. if the response can be spammy).
  * @param {{qsParams: Object <string, string>, uri: string, type: string}} urlInfo Information about the query that returned the given matches, including querystring parameters, uri, and the type of search.
@@ -163,7 +151,7 @@ async function sendInteractiveSearchResult(
 
     /**
      * Enable users to react to the given message to get detailed DB results for their selection.
-     * @param {Message} msg The bot's interactive query message
+     * @param {import('discord.js').Message} msg The bot's interactive query message
      */
     const addReactivity = async (msg) => {
         const ids = matches.map((m) => m.emojiId);
@@ -536,11 +524,19 @@ async function formatConvertibles(isDM, convertible, opts) {
 /**
  * Gets the filter that matches the given string, if possible.
  * @param {string} tester String to check if it's a filter
- * @returns {DatabaseFilter|undefined} The closest matching filter, if any.
+ * @returns {DatabaseFilter[]|undefined} The first ten filters that matched
  */
 function getFilter(tester) {
     // Process filter-y nicknames.
-    if (!tester || typeof tester !== 'string') return;
+    if (typeof tester !== 'string') {
+        return;
+    }
+
+    // The most recent 10 if nothing specified
+    if (tester === '') {
+        return filters.slice(0, 9);
+    }
+
     const asFilterSearchTerm = (token) => {
         if (/^3_?d/i.test(token)) return '3_days';
         if (/^3_?m/i.test(token)) return '3_months';
@@ -553,10 +549,10 @@ function getFilter(tester) {
         const currentEvent = filters.find(
             (f) => f.code_name !== '1_month' && f.start_time && !f.end_time,
         );
-        if (currentEvent) return currentEvent;
+        if (currentEvent) return [currentEvent];
     }
     const searchTerm = asFilterSearchTerm(tester);
-    return getSearchedEntity(searchTerm, filters)[0];
+    return getSearchedEntity(searchTerm, filters);
 }
 
 /**
@@ -570,7 +566,7 @@ function extractEventFilter(tokens) {
     const filterIndex = introducerIndex + 1;
     let filter = null;
     if (filterIndex < tokens.length) {
-        filter = getFilter(tokens[filterIndex]);
+        filter = getFilter(tokens[filterIndex])[0];
     }
 
     // Construct the remaining (unused) tokens from all input tokens except the one that produced the filter
@@ -614,10 +610,10 @@ function getLoot(tester, nicknames) {
  */
 function getMice(tester, nicknames) {
     if (!tester) return;
-    let ltester = `${tester}`.toLowerCase();
+    const ltester = `${tester}`.toLowerCase();
     if (nicknames && ltester in nicknames && nicknames[ltester])
-        ltester = nicknames[ltester].toLowerCase();
-    return getSearchedEntity(ltester, mice);
+        tester = nicknames[ltester].toLowerCase();
+    return getSearchedEntity(tester, mice);
 }
 
 /**
@@ -951,19 +947,21 @@ async function save() {
     return true;
 }
 
-module.exports.getMHCTList = getMHCTList;
-module.exports.initialize = initialize;
-module.exports.findThing = findThing;
-module.exports.extractEventFilter = extractEventFilter;
-module.exports.getFilter = getFilter;
-module.exports.getLoot = getLoot;
-module.exports.getMice = getMice;
-module.exports.getConvertibles = getConvertibles;
-module.exports.formatLoot = formatLoot;
-module.exports.formatMice = formatMice;
-module.exports.formatConvertibles = formatConvertibles;
-module.exports.sendInteractiveSearchResult = sendInteractiveSearchResult;
-module.exports.getSearchedEntity = getSearchedEntity;
-module.exports.listFilters = listFilters;
-module.exports.save = save;
-module.exports.getMinluckString = getMinluckString;
+export {
+    getMHCTList,
+    initialize,
+    findThing,
+    extractEventFilter,
+    getFilter,
+    getLoot,
+    getMice,
+    getConvertibles,
+    formatLoot,
+    formatMice,
+    formatConvertibles,
+    sendInteractiveSearchResult,
+    getSearchedEntity,
+    listFilters,
+    save,
+    getMinluckString,
+};

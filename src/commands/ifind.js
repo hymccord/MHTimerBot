@@ -1,15 +1,10 @@
-// eslint-disable-next-line no-unused-vars
-const { Message } = require('discord.js');
-
-const CommandResult = require('../interfaces/command-result');
-const { splitMessageRegex } = require('../modules/format-utils');
-const Logger = require('../modules/logger');
-const { extractEventFilter, getLoot, formatLoot,
-    sendInteractiveSearchResult, listFilters, getMice, formatMice } = require('../modules/mhct-lookup');
-
+import CommandResult from '../interfaces/command-result.js';
+import { splitMessageRegex } from '../modules/format-utils.js';
+import Logger from '../modules/logger.js';
+import { extractEventFilter, getLoot, formatLoot, sendInteractiveSearchResult, listFilters, getMice, formatMice } from '../modules/mhct-lookup.js';
 /**
  *
- * @param {Message} message The message that triggered the action
+ * @param {import('discord.js').Message} message The message that triggered the action
  * @param {string[]} userArgs The tokens of the command
  * @returns {Promise<CommandResult>} Status of the execution
  */
@@ -87,7 +82,7 @@ function helpFind() {
 }
 
 // Initialize and save are in find.js.
-module.exports = {
+export default {
     name: 'ifind',
     args: true,
     usage: 'Coming Soon',

@@ -1,38 +1,17 @@
-/**
- * MHTimer Bot
- */
-// Import required modules
-const { DateTime, Duration, Interval } = require('luxon');
-const Discord = require('discord.js');
-const fs = require('fs');
-
-// Extract type-hinting definitions for Discord classes.
-// eslint-disable-next-line no-unused-vars
-const { ChannelType, Client, Collection, TextBasedChannelTypes, Guild, GuildMember, GatewayIntentBits, Message, MessageReaction, EmbedBuilder, Partials, Status, TextChannel, User } = Discord;
-
-// Import our own local classes and functions.
-const Timer = require('./modules/timers.js');
-const CommandResult = require('./interfaces/command-result');
-const {
-    oxfordStringifyValues,
-    splitString,
-    timeLeft,
-    unescapeEntities,
-    isValidURL,
-} = require('./modules/format-utils');
-const { loadDataFromJSON, saveDataAsJSON } = require('./modules/file-utils');
-const Logger = require('./modules/logger');
-const {
-    addMessageReaction,
-} = require('./modules/message-utils');
-const security = require('./modules/security.js');
-
-// Access external URIs, like @devjacksmith 's tools.
-const fetch = require('node-fetch');
-// We need more robust CSV handling
-const csv_parse = require('csv-parse');
-const { REST } = require('@discordjs/rest');
-const { Routes } = require('discord-api-types/v9');
+import { DateTime, Duration, Interval } from 'luxon';
+import { ChannelType, Client, Collection, GatewayIntentBits, EmbedBuilder, Partials, Status } from 'discord.js';
+import fs from 'fs';
+import Timer from './modules/timers.js';
+import CommandResult from './interfaces/command-result.js';
+import { oxfordStringifyValues, splitString, timeLeft, unescapeEntities, isValidURL } from './modules/format-utils.js';
+import { loadDataFromJSON, saveDataAsJSON } from './modules/file-utils.js';
+import Logger from './modules/logger.js';
+import { addMessageReaction } from './modules/message-utils.js';
+import * as security from './modules/security.js';
+import fetch from 'node-fetch';
+import csv_parse from 'csv-parse';
+import { REST } from '@discordjs/rest';
+import { Routes } from 'discord-api-types/v9';
 
 // Globals
 const client = new Client({
@@ -77,7 +56,7 @@ const last_timestamps = {
 
 /** @type {Object <string, NodeJS.Timer>} */
 const dataTimers = {};
-/** @type {Map <string, {active: boolean, channels: TextChannel[], inactiveChannels: TextChannel[]}>} */
+/** @type {Map <string, {active: boolean, channels: import('discord.js').TextChannel[], inactiveChannels: import('discord.js').TextChannel[]}>} */
 const timer_config = new Map();
 
 // A collection to hold all the commands in the commands directory
@@ -557,7 +536,7 @@ function createTimersFromList(timerData) {
  * its default announcement and its default reminders.
  *
  * @param {Timer} timer The timer to schedule.
- * @param {TextChannel[]} channels the channels on which this timer will initially perform announcements.
+ * @param {import('discord.js').TextChannel[]} channels the channels on which this timer will initially perform announcements.
  */
 function scheduleTimer(timer, channels) {
     if (timer.isSilent())
@@ -615,7 +594,7 @@ function handleInteraction(interaction) {
  * The meat of user interaction. Receives the message that starts with the magic
  * character and decides if it knows what to do next.
  *
- * @param {Message} message a Discord message to parse
+ * @param {import('discord.js').Message} message a Discord message to parse
  */
 function parseUserMessage(message) {
     const tokens = splitString(message.content).map((s) => s.toLocaleLowerCase());
@@ -754,7 +733,7 @@ function parseUserMessage(message) {
  * Convert a HitGrab short link into a BitLy short link that does not send the clicker to Facebook.
  * If successful, sends the converted link to the same channel that received the input message.
  *
- * @param {Message} message a Discord message containing at least one htgb.co URL.
+ * @param {import('discord.js').Message} message a Discord message containing at least one htgb.co URL.
  */
 async function convertRewardLink(message) {
     if (!settings.bitly_token) {
@@ -1004,7 +983,7 @@ function doRemind(timer) {
  * the reminder as a Message Embed via PM.
  * MAYBE: Add ReminderInfo class, let Timers ID one, and have timer definitions provide additional information
  *      to improve the appearance of the reminders.
- * @param {User} user The Discord user to be reminded
+ * @param {import('discord.js').User} user The Discord user to be reminded
  * @param {TimerReminder} remind the user's specific data w.r.t. the Timer that activated
  * @param {Timer} timer the Timer that activated
  */
@@ -1066,7 +1045,7 @@ function sendRemind(user, remind, timer) {
  * TODO: Should this be a EmbedBuilder?
  * TODO: Dynamically generate this information based on timers, etc.
  *
- * @param {Message} message The message that triggered the command
+ * @param {import('discord.js').Message} message The message that triggered the command
  * @param {string[]} [tokens] An array of user text, the first of which is the specific command to get help for.
  * @returns {string} The desired help text.
  */
@@ -1213,7 +1192,7 @@ function remindRH(new_location) {
 
 /**
  * Relic Hunter location was announced, save it and note the source
- * @param {Message} message Webhook-generated message announcing RH location
+ * @param {import('discord.js').Message} message Webhook-generated message announcing RH location
  */
 function handleRHWebhook(message) {
     // Find the location in the text.
@@ -1312,7 +1291,7 @@ function MHCTRHLookup() {
 
 /**
  * Processes a request to find the relic hunter
- * @param {TextChannel} channel the channel on which to respond.
+ * @param {import('discord.js').TextChannel} channel the channel on which to respond.
  */
 async function findRH(channel) {
     const asMessage = (location) => {

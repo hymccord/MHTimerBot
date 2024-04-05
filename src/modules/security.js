@@ -1,7 +1,4 @@
-// Extract type-hinting definitions for Discord classes.
-// eslint-disable-next-line no-unused-vars
-const { Client, Collection, Guild, GuildMember, PermissionsBitField, User } = require('discord.js');
-
+import { PermissionsBitField } from 'discord.js';
 /**
  * Checks the permissions of the member to see if they're at the minimum level
  * @param {GuildMember} member Guild member to confirm permissions for
@@ -31,4 +28,6 @@ function checkPerms(member, level) {
     return authCheck;
 }
 
-exports.checkPerms = checkPerms;
+export {
+    checkPerms,
+};

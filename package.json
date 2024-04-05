@@ -9,6 +9,7 @@
   "main": "src/MHTimer.js",
   "license": "MIT",
   "private": true,
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/AardWolf/MHTimerBot"

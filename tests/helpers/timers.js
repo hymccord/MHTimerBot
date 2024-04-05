@@ -15,5 +15,7 @@ const restoreTimerHelper = ({ ...stubs }) => {
     Object.values(stubs).forEach(stub => stub.restore());
 };
 
-exports.stubTimerHelper = stubTimerHelper;
-exports.restoreTimerHelper = restoreTimerHelper;
+export {
+    stubTimerHelper,
+    restoreTimerHelper,
+};
