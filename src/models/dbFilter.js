@@ -28,6 +28,7 @@ class DatabaseFilter {
         this.dynamic_start = rest.dynamic_start;
 
         // Allow ranking this entity by lowerValue:
+        this.value = this.code_name;
         this.lowerValue = this.code_name.toLowerCase();
 
         // Don't allow other modifications of this object.
