@@ -1,7 +1,5 @@
-// Timer Class
-const { DateTime, Duration, Interval } = require('luxon');
-const Logger = require('./logger');
-
+import { DateTime, Duration, Interval } from 'luxon';
+import Logger from './logger.js';
 /**
  * @typedef {object} TimerSeed A serializable representation of a timer, suitable for reading and writing with JSON files.
  *
@@ -385,4 +383,4 @@ function _isLuxonObject(value) {
     return false;
 }
 
-module.exports = Timer;
+export default Timer;

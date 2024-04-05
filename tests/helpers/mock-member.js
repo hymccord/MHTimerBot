@@ -1,4 +1,4 @@
-const sinon = require('sinon');
+import * as sinon from 'sinon';
 
 /**
  * A Fake guild member for use in tests
@@ -48,4 +48,6 @@ const mockMember = ({
     return stub;
 };
 
-module.exports = mockMember;
+export {
+    mockMember,
+};

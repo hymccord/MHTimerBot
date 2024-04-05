@@ -1,15 +1,12 @@
-// eslint-disable-next-line no-unused-vars
-const { Message, CommandInteraction, ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder } = require('discord.js');
-
-const CommandResult = require('../interfaces/command-result');
-const Logger = require('../modules/logger');
-const { initialize, extractEventFilter, getMice, formatMice, sendInteractiveSearchResult,
-    listFilters, getLoot, formatLoot, save, getFilter } = require('../modules/mhct-lookup');
-const { splitMessageRegex } = require('../modules/format-utils');
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder } from 'discord.js';
+import CommandResult from '../interfaces/command-result.js';
+import Logger from '../modules/logger.js';
+import { initialize, extractEventFilter, getMice, formatMice, sendInteractiveSearchResult, listFilters, getLoot, formatLoot, save, getFilter } from '../modules/mhct-lookup.js';
+import { splitMessageRegex } from '../modules/format-utils.js';
 
 /**
  *
- * @param {Message} message The message that triggered the action
+ * @param {import('discord.js').Message} message The message that triggered the action
  * @param {string[]} userArgs The tokens of the command
  * @returns {Promise<CommandResult>} Status of the execution
  */
@@ -87,7 +84,7 @@ function helpFind() {
 
 /**
  * Reply to an autotype request. Technically this could be folded into the interact?
- * @param {CommandInteraction} interaction Must be an autocomplete interaction
+ * @param {import('discord.js').CommandInteraction} interaction Must be an autocomplete interaction
  */
 async function autotype(interaction) {
     if (interaction.isAutocomplete()) {
@@ -154,9 +151,9 @@ async function interactionDisplayPage(interaction, pages, current_page) {
             .setCustomId(`fmshare_${interaction.id}_${current_page}`)
             .setLabel('Send to Channel')
             .setStyle(ButtonStyle.Primary);
-        buttons = buttons.addComponents(share_button); 
+        buttons = buttons.addComponents(share_button);
         // Set filter
-        const filter = f => (f.customId === `fmshare_${interaction.id}_${current_page}` || f.customId === `fmmore_${interaction.id}_${current_page}`) 
+        const filter = f => (f.customId === `fmshare_${interaction.id}_${current_page}` || f.customId === `fmmore_${interaction.id}_${current_page}`)
                             && f.user.id === interaction.user.id;
         // Set collector
         const collector = interaction.channel.createMessageComponentCollector({ filter, time: 1 * 60 * 1000 });
@@ -212,7 +209,7 @@ const slashCommand = new SlashCommandBuilder()
             .setRequired(false)
             .setAutocomplete(true));
 
-module.exports = {
+export default {
     name: 'find-mouse',
     args: true,
     usage: 'Coming Soon',

@@ -73,7 +73,7 @@ function prettyPrintArrayAsString(
         !headers.every((col) => col.key && col.label !== undefined)
     )
         throw new TypeError(
-            "Input headers of incorrect type. Expected array of objects with properties 'key' and 'label'.",
+            'Input headers of incorrect type. Expected array of objects with properties \'key\' and \'label\'.',
         );
     // All object keys in the headers array must be found in both the body and columnFormat objects.
     const bodyKeys = body.reduce((acc, row) => {
@@ -478,15 +478,17 @@ function howManyHunts(attractionRate) {
     return huntsForOne;
 }
 
-exports.oxfordStringifyValues = oxfordStringifyValues;
-exports.prettyPrintArrayAsString = prettyPrintArrayAsString;
-exports.splitString = splitString;
-exports.timeLeft = timeLeft;
-exports.unescapeEntities = unescapeEntities;
-exports.isValidURL = isValidURL;
-exports.calculateRate = calculateRate;
-exports.integerComma = integerComma;
-exports.intToHuman = intToHuman;
-exports.splitMessageRegex = splitMessageRegex;
-exports.formatInterval = formatInterval;
-exports.howManyHunts = howManyHunts;
+export {
+    oxfordStringifyValues,
+    prettyPrintArrayAsString,
+    splitString,
+    timeLeft,
+    unescapeEntities,
+    isValidURL,
+    calculateRate,
+    integerComma,
+    intToHuman,
+    splitMessageRegex,
+    formatInterval,
+    howManyHunts,
+};

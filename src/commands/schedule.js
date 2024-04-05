@@ -1,11 +1,8 @@
-// eslint-disable-next-line no-unused-vars
-const { Message, Util } = require('discord.js');
-
-const { DateTime, Duration } = require('luxon');
-const CommandResult = require('../interfaces/command-result');
-const { timeLeft, splitMessageRegex } = require('../modules/format-utils');
-const Logger = require('../modules/logger');
-const { timerAliases } = require('../modules/timer-helper');
+import { DateTime, Duration } from 'luxon';
+import CommandResult from '../interfaces/command-result.js';
+import { timeLeft, splitMessageRegex } from '../modules/format-utils.js';
+import Logger from '../modules/logger.js';
+import { timerAliases } from '../modules/timer-helper.js';
 
 const usage = [
     'Displays upcoming reminders know or filtered to an area or sub-area.',
@@ -19,7 +16,7 @@ const usage = [
 ].join('\n\t');
 
 /**
- * @param {Message} message
+ * @param {import('discord.js').Message} message
  * @param {string[]} tokens
  * @returns {Promise<CommandResult>}
  */
@@ -100,7 +97,7 @@ async function doSCHED(message, tokens) {
     return theResult;
 }
 
-module.exports = {
+export default {
     name: 'schedule',
     args: true,
     usage: usage,

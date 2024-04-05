@@ -1,10 +1,18 @@
-const fs = require('fs');
-const CommandResult = require('../interfaces/command-result');
-const Logger = require('./logger');
+import CommandResult from '../interfaces/command-result.js';
+import Logger from './logger.js';
+import { readFile } from 'node:fs/promises';
 
 // Read instance overrides from the settings file.
-const settingsPath = '../../data/settings';
-const settings = fs.existsSync(settingsPath) ? require(settingsPath) : {};
+const settingsPath = '../../data/settings.json';
+
+let settings = {};
+try {
+    const fileUrl = new URL(settingsPath, import.meta.url);
+    settings = JSON.parse(await readFile(fileUrl, 'utf8'));
+} catch {
+    Logger.error('No setting file found');
+}
+
 const { reactions = {} } = settings;
 const successfulEmoji = reactions.success || '✅';
 const failedEmoji = reactions.failure || '❌';
@@ -70,4 +78,6 @@ async function addMessageReaction(executedCommand) {
     return ourResult;
 }
 
-exports.addMessageReaction = addMessageReaction;
+export {
+    addMessageReaction,
+};

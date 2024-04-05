@@ -25,4 +25,6 @@ function getSearchedEntity(input, values) {
     return matches.map(m => m.entity);
 }
 
-module.exports.getSearchedEntity = getSearchedEntity;
+export {
+    getSearchedEntity,
+};

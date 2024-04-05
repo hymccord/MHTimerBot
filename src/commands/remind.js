@@ -1,11 +1,8 @@
-// eslint-disable-next-line no-unused-vars
-const { Formatters, Message, User } = require('discord.js');
-
-const CommandResult = require('../interfaces/command-result');
-const { oxfordStringifyValues, splitMessageRegex } = require('../modules/format-utils');
-const Logger = require('../modules/logger');
-const { listRemind, timerAliases, getKnownTimersDetails } = require('../modules/timer-helper');
-
+import { codeBlock } from 'discord.js';
+import CommandResult from '../interfaces/command-result.js';
+import { oxfordStringifyValues, splitMessageRegex } from '../modules/format-utils.js';
+import Logger from '../modules/logger.js';
+import { listRemind, timerAliases, getKnownTimersDetails } from '../modules/timer-helper.js';
 const usage = [
     'Provide no arguments for a list of your reminders. Use [<area>] [<sub-area>] [<number>] to set a reminder',
     '<area>            -> specify a particular area with a timer (sg)',
@@ -19,7 +16,7 @@ const usage = [
 
 /**
  *
- * @param {Message} message The message that triggered the action
+ * @param {import('discord.js').Message} message The message that triggered the action
  * @param {string[]} tokens The tokens of the command
  * @returns {Promise<CommandResult>} Status of the execution
  */
@@ -67,7 +64,7 @@ async function doREMIND(message, tokens) {
 
         theResult.success = responses.length > 0;
         return sendDM(message.author, theResult, responses.length > 0
-            ? Formatters.codeBlock(responses.join('\n'))
+            ? codeBlock(responses.join('\n'))
             : `I couldn't find a matching reminder for you in "${requestName}".`);
     }
 
@@ -97,7 +94,7 @@ async function doREMIND(message, tokens) {
     if (responses.length) {
         Logger.log(`REMIND: updated ${responses.length} for ${message.author.username} to a count of ${count}.`, timerRequest);
         theResult.success = true;
-        return sendDM(message.author, theResult, Formatters.codeBlock(responses.join('\n')));
+        return sendDM(message.author, theResult, codeBlock(responses.join('\n')));
     }
 
     // No updates were made - free to add a new reminder.
@@ -133,7 +130,7 @@ async function doREMIND(message, tokens) {
 
 /**
  * Helper method to DM a user some preformatted text.
- * @param {User} author the user to DM
+ * @param {import('discord.js').User} author the user to DM
  * @param {CommandResult} result the current result of the REMIND command, with success or failure already set.
  * @param {string} text the message to send via DM.
  * @returns {Promise<CommandResult>}
@@ -151,7 +148,7 @@ async function sendDM(author, result, text) {
     return result;
 }
 
-module.exports = {
+export default {
     name: 'remind',
     args: true,
     usage: usage,

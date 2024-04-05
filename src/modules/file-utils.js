@@ -1,10 +1,6 @@
-// Access local URIs, like files.
-const fs = require('fs/promises');
-
-const Logger = require('./logger');
-
+import fs from 'fs/promises';
+import Logger from './logger.js';
 const file_encoding = 'utf8';
-
 /**
  * Generic Promise-based file read.
  * Returns the data as an object, or the error that occurred when reading and parsing the file.
@@ -41,5 +37,7 @@ async function saveDataAsJSON(filename, rawData) {
     }
 }
 
-exports.loadDataFromJSON = loadDataFromJSON;
-exports.saveDataAsJSON = saveDataAsJSON;
+export {
+    loadDataFromJSON,
+    saveDataAsJSON,
+};
