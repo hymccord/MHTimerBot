@@ -65,25 +65,25 @@ const slashCommands = [];
 const commandFiles = fs.readdirSync('src/commands').filter(file => file.endsWith('.js'));
 for (const file of commandFiles) {
     try {
-        const command = require(`./commands/${file}`);
-        if (command.name) {
-            if (typeof(command.canDM) === 'undefined') {
-                command.canDM = true;
-                Logger.log(`Set canDM to true for ${command.name}`);
-            }
-            if (command.initialize) {
-                command.initialize().catch((err) => {
-                    Logger.error(`Error initializing ${command.name}: ${err}`);
-                    throw err;
-                });
-            }
-            client.commands.set(command.name, command);
-            if (command.slashCommand) {
-                slashCommands.push(command.slashCommand.toJSON());
-            }
-        } else {
-            Logger.error(`Error in ${file}: Command name property is missing`);
-        }
+        // const { default: command } = await import(`./commands/${file}`);
+        // if (command.name) {
+        //     if (typeof(command.canDM) === 'undefined') {
+        //         command.canDM = true;
+        //         Logger.log(`Set canDM to true for ${command.name}`);
+        //     }
+        //     if (command.initialize) {
+        //         command.initialize().catch((err) => {
+        //             Logger.error(`Error initializing ${command.name}: ${err}`);
+        //             throw err;
+        //         });
+        //     }
+        //     client.commands.set(command.name, command);
+        //     if (command.slashCommand) {
+        //         slashCommands.push(command.slashCommand.toJSON());
+        //     }
+        // } else {
+        //     Logger.error(`Error in ${file}: Command name property is missing`);
+        // }
     } catch (e) {
         Logger.error(`Could not load ${file}:`, e);
     }
@@ -102,211 +102,212 @@ process.on('uncaughtException', exception => {
     doSaveAll().then(didSave => Logger.log(`Save status: files ${didSave ? '' : 'maybe '}saved.`));
 });
 
-function Main() {
+async function Main() {
     // Load saved settings data, such as the token for the bot.
-    loadSettings()
-        .then(hasSettings => {
-            if (!hasSettings) {
-                process.exitCode = 1;
-                throw new Error('Exiting due to failure to acquire local settings data.');
-            }
-            function failedLoad(prefix, reason) {
-                Logger.log(prefix, reason);
-                return false;
-            }
-            // Settings loaded successfully, so initiate loading of other resources.
-            const saveInterval = refresh_rate.as('milliseconds');
+    try {
+        const hasSettings = await loadSettings();
 
-            // Schedule the daily Relic Hunter reset. Reset cancelled by issue 152
-            // rescheduleResetRH();
+        if (!hasSettings) {
+            process.exitCode = 1;
+            throw new Error('Exiting due to failure to acquire local settings data.');
+        }
+        function failedLoad(prefix, reason) {
+            Logger.log(prefix, reason);
+            return false;
+        }
+        // Settings loaded successfully, so initiate loading of other resources.
+        const saveInterval = refresh_rate.as('milliseconds');
 
-            // Create timers list from the timers file.
-            const hasTimers = loadTimers()
-                .then(timerData => {
-                    createTimersFromList(timerData);
-                    Logger.log(`Timers: imported ${timerData.length} from file.`);
-                    return client.timers_list.length > 0;
-                })
-                .catch(err => failedLoad('Timers: import error:\n', err));
+        // Schedule the daily Relic Hunter reset. Reset cancelled by issue 152
+        // rescheduleResetRH();
 
-            // Create reminders list from the reminders file.
-            const hasReminders = loadReminders()
-                .then(reminderData => {
-                    if (createRemindersFromData(reminderData))
-                        pruneExpiredReminders();
-                    Logger.log(`Reminders: imported ${reminderData.length} from file.`);
-                    return client.reminders.length > 0;
-                })
-                .catch(err => failedLoad('Reminders: import error:\n', err));
-            hasReminders.then(() => {
-                Logger.log(`Reminders: Configuring save every ${saveInterval / (60 * 1000)} min.`);
-                dataTimers['reminders'] = setInterval(() => {
+        // Create timers list from the timers file.
+        const hasTimers = loadTimers()
+            .then(timerData => {
+                createTimersFromList(timerData);
+                Logger.log(`Timers: imported ${timerData.length} from file.`);
+                return client.timers_list.length > 0;
+            })
+            .catch(err => failedLoad('Timers: import error:\n', err));
+
+        // Create reminders list from the reminders file.
+        const hasReminders = loadReminders()
+            .then(reminderData => {
+                if (createRemindersFromData(reminderData))
                     pruneExpiredReminders();
-                    saveReminders();
-                }, saveInterval);
+                Logger.log(`Reminders: imported ${reminderData.length} from file.`);
+                return client.reminders.length > 0;
+            })
+            .catch(err => failedLoad('Reminders: import error:\n', err));
+        hasReminders.then(() => {
+            Logger.log(`Reminders: Configuring save every ${saveInterval / (60 * 1000)} min.`);
+            dataTimers['reminders'] = setInterval(() => {
+                pruneExpiredReminders();
+                saveReminders();
+            }, saveInterval);
+        });
+
+        // Register known nickname URIs
+        const hasNicknames = loadNicknameURLs()
+            .then(urls => {
+                Object.assign(nickname_urls, urls);
+                Logger.log(`Nicknames: imported ${Object.keys(urls).length} sources from file.`);
+                return Object.keys(nickname_urls).length > 0;
+            })
+            .catch(err => failedLoad('Nicknames: import error:\n', err));
+        hasNicknames
+            .then(refreshNicknameData)
+            .then(() => {
+                Logger.log(`Nicknames: Configuring data refresh every ${saveInterval / (60 * 1000)} min.`);
+                dataTimers['nicknames'] = setInterval(refreshNicknameData, saveInterval);
             });
 
-            // Register known nickname URIs
-            const hasNicknames = loadNicknameURLs()
-                .then(urls => {
-                    Object.assign(nickname_urls, urls);
-                    Logger.log(`Nicknames: imported ${Object.keys(urls).length} sources from file.`);
-                    return Object.keys(nickname_urls).length > 0;
-                })
-                .catch(err => failedLoad('Nicknames: import error:\n', err));
-            hasNicknames
-                .then(refreshNicknameData)
-                .then(() => {
-                    Logger.log(`Nicknames: Configuring data refresh every ${saveInterval / (60 * 1000)} min.`);
-                    dataTimers['nicknames'] = setInterval(refreshNicknameData, saveInterval);
-                });
+        // Register DBGames short -> long mappings
+        const hasDBGamesLocations = loadDBGamesLocations()
+            .then(DBGamesLocationData => {
+                Object.assign(dbgames_locations, DBGamesLocationData);
+                Logger.log(`DBGames Location: imported ${Object.keys(dbgames_locations).length} from file.`);
+                return Object.keys(dbgames_locations).length > 0;
+            })
+            .catch(err => failedLoad('DBGames Location: import error:\n', err));
 
-            // Register DBGames short -> long mappings
-            const hasDBGamesLocations = loadDBGamesLocations()
-                .then(DBGamesLocationData => {
-                    Object.assign(dbgames_locations, DBGamesLocationData);
-                    Logger.log(`DBGames Location: imported ${Object.keys(dbgames_locations).length} from file.`);
-                    return Object.keys(dbgames_locations).length > 0;
-                })
-                .catch(err => failedLoad('DBGames Location: import error:\n', err));
+        // Start loading remote data.
+        const remoteData = [
+            getRHLocation(),
+        ];
 
-            // Start loading remote data.
-            const remoteData = [
-                getRHLocation(),
-            ];
+        // Configure the bot behavior.
+        client.once('ready', () => {
+            Logger.log('I am alive!');
+            // Migrate settings at this point since connection required for some pieces
+            migrateSettings(client.settings);
+            // Register slash commands
+            const discordRest = new REST({ version: '9' }).setToken(client.settings.token);
 
-            // Configure the bot behavior.
-            client.once('ready', () => {
-                Logger.log('I am alive!');
-                // Migrate settings at this point since connection required for some pieces
-                migrateSettings(client.settings);
-                // Register slash commands
-                const discordRest = new REST({ version: '9' }).setToken(client.settings.token);
-
-                // We might be able to move this to after the bot is connected and run it once
-                if (client.application.id) {
-                    (async () => {
-                        try {
-                            Logger.log(`Re-registering ${slashCommands.length} slash commands.`);
-
-                            await discordRest.put(
-                                Routes.applicationCommands(client.application.id),
-                                { body: slashCommands },
-                            );
-
-                            Logger.log('Slash commands registered.');
-                        } catch (error) {
-                            Logger.error(error);
-                        }
-                    })();
-                }
-
-                // Find all text channels on which to send announcements.
-                const announcables = client.guilds.cache.reduce((channels, guild) => {
-                    const requested = client.settings.guilds[guild.id].timedAnnouncementChannels;
-                    const candidates = guild.channels.cache
-                        .filter(c => requested.has(c.name) && c.isTextBased());
-                    if (candidates.size)
-                        Array.prototype.push.apply(channels, Array.from(candidates.values()));
-                    else if (requested.size) {
-                        Logger.warn(`Timers: No valid channels in ${guild.name} for announcements.`);
-                    }
-                    return channels;
-                }, []);
-
-                // Use one timeout per timer to manage default reminders and announcements.
-                client.timers_list.forEach(timer => scheduleTimer(timer, announcables));
-                Logger.log(`Timers: Initialized ${timer_config.size} timers on channels ${oxfordStringifyValues(announcables.map(c => `${c.guild.name}#${c.name}`))}.`);
-
-                // If we disconnect and then reconnect, do not bother rescheduling the already-scheduled timers.
-                client.on('ready', () => Logger.log('I am inVINCEeble!'));
-            });
-
-            // Discord will trim leading & trailing spaces from messages automatically, so our prefix
-            // regexps do not need to handle that. If a space follows the prefix, we are guaranteed at
-            // least one additional token to process.
-            const re = Object.freeze(Object.entries(client.settings.guilds).reduce((res, [guildId, guild]) => {
-                if (guild.botPrefix) {
-                    res[guildId] = new RegExp(`^${guild.botPrefix.trim()} `);
-                }
-                return res;
-            }, { hgReward: /(http[s]?:\/\/htgb\.co\/)/ }));
-            
-            client.on('messageCreate', async message => {
-                if (message.partial) {
+            // We might be able to move this to after the bot is connected and run it once
+            if (client.application.id) {
+                (async () => {
                     try {
-                        message = await message.fetch();
-                        Logger.log('MessageCreate: Handled partial Message');
-                    } catch (err) {
-                        Logger.error('MessageCreate: failed to resolve partial Message', err);
-                        return;
+                        Logger.log(`Re-registering ${slashCommands.length} slash commands.`);
+
+                        await discordRest.put(
+                            Routes.applicationCommands(client.application.id),
+                            { body: slashCommands },
+                        );
+
+                        Logger.log('Slash commands registered.');
+                    } catch (error) {
+                        Logger.error(error);
                     }
-                }
+                })();
+            }
 
-                // Ignore the bot's own messages (we do allow some bot-to-bot interactions).
-                if (message.author.id === client.user.id)
+            // Find all text channels on which to send announcements.
+            const announcables = client.guilds.cache.reduce((channels, guild) => {
+                const requested = client.settings.guilds[guild.id].timedAnnouncementChannels;
+                const candidates = guild.channels.cache
+                    .filter(c => requested.has(c.name) && c.isTextBased());
+                if (candidates.size)
+                    Array.prototype.push.apply(channels, Array.from(candidates.values()));
+                else if (requested.size) {
+                    Logger.warn(`Timers: No valid channels in ${guild.name} for announcements.`);
+                }
+                return channels;
+            }, []);
+
+            // Use one timeout per timer to manage default reminders and announcements.
+            client.timers_list.forEach(timer => scheduleTimer(timer, announcables));
+            Logger.log(`Timers: Initialized ${timer_config.size} timers on channels ${oxfordStringifyValues(announcables.map(c => `${c.guild.name}#${c.name}`))}.`);
+
+            // If we disconnect and then reconnect, do not bother rescheduling the already-scheduled timers.
+            client.on('ready', () => Logger.log('I am inVINCEeble!'));
+        });
+
+        // Discord will trim leading & trailing spaces from messages automatically, so our prefix
+        // regexps do not need to handle that. If a space follows the prefix, we are guaranteed at
+        // least one additional token to process.
+        const re = Object.freeze(Object.entries(client.settings.guilds).reduce((res, [guildId, guild]) => {
+            if (guild.botPrefix) {
+                res[guildId] = new RegExp(`^${guild.botPrefix.trim()} `);
+            }
+            return res;
+        }, { hgReward: /(http[s]?:\/\/htgb\.co\/)/ }));
+
+        client.on('messageCreate', async message => {
+            if (message.partial) {
+                try {
+                    message = await message.fetch();
+                    Logger.log('MessageCreate: Handled partial Message');
+                } catch (err) {
+                    Logger.error('MessageCreate: failed to resolve partial Message', err);
                     return;
-
-                // A DM can only be a user message.
-                if (message.channel.type === ChannelType.DM) {
-                    parseUserMessage(message);
-                    return;
                 }
+            }
 
-                const guildId = message.guild.id;
-                const guildSettings = client.settings.guilds[guildId];
-                if (message.webhookId && [
-                    guildSettings.relic_hunter_webhook,
-                    settings.relic_hunter_webhook,
-                ].includes(message.webhookId)) {
-                    handleRHWebhook(message);
-                } else if (message.channel.name === guildSettings.linkConversionChannel && re.hgReward.test(message.content.toLowerCase())) {
-                    convertRewardLink(message);
-                } else if (message.author.bot) {
-                    // The only supported bot-to-bot interaction is reward link conversion.
-                } else if (re[guildId].test(message.content) || message.content === guildSettings.botPrefix) {
-                    parseUserMessage(message);
-                }
-            });
+            // Ignore the bot's own messages (we do allow some bot-to-bot interactions).
+            if (message.author.id === client.user.id)
+                return;
 
-            // Handle slashCommands TODO: This becomes a function so different interactions get handled
-            client.on('interactionCreate', async interaction => handleInteraction(interaction));
+            // A DM can only be a user message.
+            if (message.channel.type === ChannelType.DM) {
+                parseUserMessage(message);
+                return;
+            }
 
-            // WebSocket connection error for the bot client.
-            client.on('error', error => {
-                Logger.error(`Discord Client Error Received: "${error.message}"\n`, error.error);
-            //    quit(); // Should we? or just let it attempt to reconnect?
-            });
+            const guildId = message.guild.id;
+            const guildSettings = client.settings.guilds[guildId];
+            if (message.webhookId && [
+                guildSettings.relic_hunter_webhook,
+                settings.relic_hunter_webhook,
+            ].includes(message.webhookId)) {
+                handleRHWebhook(message);
+            } else if (message.channel.name === guildSettings.linkConversionChannel && re.hgReward.test(message.content.toLowerCase())) {
+                convertRewardLink(message);
+            } else if (message.author.bot) {
+                // The only supported bot-to-bot interaction is reward link conversion.
+            } else if (re[guildId].test(message.content) || message.content === guildSettings.botPrefix) {
+                parseUserMessage(message);
+            }
+        });
 
-            client.on('shardReconnecting', () => Logger.log('Connection lost, reconnecting to Discord...'));
-            // WebSocket disconnected and is no longer trying to reconnect.
-            client.on('shardDisconnect', event => {
-                Logger.log(`Client socket closed: ${event.reason || 'No reason given'}`);
-                Logger.log(`Socket close code: ${event.code} (${event.wasClean ? '' : 'not '}cleanly closed)`);
-                quit();
-            });
-            // Configuration complete. Using Promise.all() requires these tasks to complete
-            // prior to bot login.
-            return Promise.all([
-                hasNicknames,
-                hasReminders,
-                hasTimers,
-                hasDBGamesLocations,
-                ...remoteData,
-            ]);
-        })
+        // Handle slashCommands TODO: This becomes a function so different interactions get handled
+        client.on('interactionCreate', async interaction => handleInteraction(interaction));
+
+        // WebSocket connection error for the bot client.
+        client.on('error', error => {
+            Logger.error(`Discord Client Error Received: "${error.message}"\n`, error.error);
+        //    quit(); // Should we? or just let it attempt to reconnect?
+        });
+
+        client.on('shardReconnecting', () => Logger.log('Connection lost, reconnecting to Discord...'));
+        // WebSocket disconnected and is no longer trying to reconnect.
+        client.on('shardDisconnect', event => {
+            Logger.log(`Client socket closed: ${event.reason || 'No reason given'}`);
+            Logger.log(`Socket close code: ${event.code} (${event.wasClean ? '' : 'not '}cleanly closed)`);
+            quit();
+        });
+        // Configuration complete. Using Promise.all() requires these tasks to complete
+        // prior to bot login.
+        await Promise.all([
+            hasNicknames,
+            hasReminders,
+            hasTimers,
+            hasDBGamesLocations,
+            ...remoteData,
+        ]);
+
         // Finally, log in now that we have loaded all data from disk,
         // requested data from remote sources, and configured the bot.
-        .then(() => client.login(settings.token))
-        .catch(err => {
-            Logger.error('Unhandled startup error, shutting down:', err);
-            client.destroy();
-            process.exitCode = 1;
-            return quit();
-        });
+        //await client.login(settings.token);
+    } catch (err) {
+        Logger.error('Unhandled startup error, shutting down:', err);
+        client.destroy();
+        process.exitCode = 1;
+        return quit();
+    }
 }
 try {
-    Main();
+    await Main();
 }
 catch(error) {
     Logger.error('Error executing Main:\n', error);
@@ -1126,7 +1127,7 @@ function refreshNicknameData() {
  *
  * @param {string} type The type of nickname to populate. Determines the sheet that is read.
  */
-function getNicknames(type) {
+async function getNicknames(type) {
     if (!nickname_urls[type]) {
         Logger.warn(`Nicknames: Received '${type}' but I don't know its URL.`);
         return;
@@ -1236,7 +1237,7 @@ async function getRHLocation() {
  * Looks up Relic Hunter Location from DBGames via Google Sheets
  * @returns {Promise<{ location: string, source: 'DBGames' }>}
  */
-function DBGamesRHLookup() {
+async function DBGamesRHLookup() {
     if (!settings.DBGames) {
         return { source: 'DBGames', location: 'unknown' };
     }
@@ -1244,49 +1245,47 @@ function DBGamesRHLookup() {
     if (relic_hunter.last_seen >= DateTime.utc().startOf('day')) {
         return relic_hunter;
     }
-    return fetch(settings.DBGames)
-        .then(async (response) => {
-            if (!response.ok) throw `HTTP ${response.status}`;
-            const json = await response.json();
-            if (json.location) {
-                Logger.log('Relic Hunter: DBGames query OK, reported location:', json.location);
-                if (dbgames_locations[json.location]) {
-                    Logger.log('Relic Hunter: Translated DBGames location: ', dbgames_locations[json.location]);
-                    return { source: 'DBGames', location: dbgames_locations[json.location], last_seen: DateTime.utc().startOf('day') };
-                } else {
-                    return { source: 'DBGames', location: json.location, last_seen: DateTime.utc().startOf('day') };
-                }
+    try {
+        const response = await fetch(settings.DBGames);
+        if (!response.ok) throw `HTTP ${response.status}`;
+        const json = await response.json();
+        if (json.location) {
+            Logger.log('Relic Hunter: DBGames query OK, reported location:', json.location);
+            if (dbgames_locations[json.location]) {
+                Logger.log('Relic Hunter: Translated DBGames location: ', dbgames_locations[json.location]);
+                return { source: 'DBGames', location: dbgames_locations[json.location], last_seen: DateTime.utc().startOf('day') };
+            } else {
+                return { source: 'DBGames', location: json.location, last_seen: DateTime.utc().startOf('day') };
             }
-        })
-        .catch((err) => {
-            Logger.error('Relic Hunter: DBGames query failed:', err);
-            return { source: 'DBGames', location: 'unknown' };
-        });
+        }
+    } catch (err) {
+        Logger.error('Relic Hunter: DBGames query failed:', err);
+        return { source: 'DBGames', location: 'unknown' };
+    }
 }
 
 /**
  * Looks up the relic hunter location from MHCT
  * @returns {Promise<{ location: string, source: 'MHCT' }>}
  */
-function MHCTRHLookup() {
-    return fetch('https://www.mhct.win/tracker.json')
-        .then(async (response) => {
-            if (!response.ok) throw `HTTP ${response.status}`;
-            const { rh } = await response.json();
-            if (rh.location)
-                rh.location = unescapeEntities(rh.location);
-            Logger.log(`Relic Hunter: MHCT query OK, location: ${rh.location}, last_seen: ${rh.last_seen}`);
-            const last_seen = Number(rh.last_seen);
-            return {
-                source: 'MHCT',
-                last_seen: DateTime.fromSeconds(isNaN(last_seen) ? 0 : last_seen),
-                location: rh.location,
-            };
-        })
-        .catch((err) => {
-            Logger.error('Relic Hunter: MHCT query failed:', err);
-            return { source: 'MHCT', location: 'unknown' };
-        });
+async function MHCTRHLookup() {
+    try {
+        const response = await fetch('https://www.mhct.win/tracker.json');
+        if (!response.ok) throw `HTTP ${response.status}`;
+        const { rh } = await response.json();
+        if (rh.location)
+            rh.location = unescapeEntities(rh.location);
+        Logger.log(`Relic Hunter: MHCT query OK, location: ${rh.location}, last_seen: ${rh.last_seen}`);
+        const last_seen = Number(rh.last_seen);
+        return {
+            source: 'MHCT',
+            last_seen: DateTime.fromSeconds(isNaN(last_seen) ? 0 : last_seen),
+            location: rh.location,
+        };
+    } catch (err) {
+        Logger.error('Relic Hunter: MHCT query failed:', err);
+        return { source: 'MHCT', location: 'unknown' };
+    }
 }
 
 /**
